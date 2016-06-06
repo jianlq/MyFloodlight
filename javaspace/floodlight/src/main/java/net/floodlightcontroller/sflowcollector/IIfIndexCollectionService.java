@@ -2,6 +2,7 @@ package net.floodlightcontroller.sflowcollector;
 
 import net.floodlightcontroller.core.module.IFloodlightService;
 import java.util.Set;
+
 public interface IIfIndexCollectionService extends IFloodlightService {
 	/**
 	 * Get the Name of an interface.
@@ -11,5 +12,4 @@ public interface IIfIndexCollectionService extends IFloodlightService {
 	 */
 	public abstract String getIfNameByIfIndex(String snmpAgentIp, Integer ifIndex);
 	public abstract Set<String> returnIfnames(String snmpAgentIp);
-
 }

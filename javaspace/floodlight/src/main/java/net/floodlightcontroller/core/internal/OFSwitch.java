@@ -1164,6 +1164,7 @@ public class OFSwitch implements IOFSwitchBackend {
 	@Override
 	public SocketAddress getInetAddress() {
 		return connections.get(OFAuxId.MAIN).getRemoteInetAddress();
+          //return connections.get(OFAuxId.MAIN).getLocalInetAddress(); //jian
 	}
 
 	@Override

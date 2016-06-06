@@ -16,11 +16,11 @@ public class InterfaceStatistics {
 	private Double ifSpeed;
 	private Double ifInMulticastpkts;
 	private Double ifInUcastpkts;
-	private Double ifInOctets;
+	private Double ifInOctets; //接收速率
 	private Double ifInDiscards;
 	private Double ifInErrors;
 	private Double ifOutUcastpkts;
-	private Double ifOutOctets;
+	private Double ifOutOctets; // 发送速率
 	private Double ifOutDiscards;
 	private Double ifOutErrors;
 	private String time;

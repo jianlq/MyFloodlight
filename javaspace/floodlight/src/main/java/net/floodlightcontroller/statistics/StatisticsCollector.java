@@ -146,7 +146,7 @@ public class StatisticsCollector implements IFloodlightModule, IStatisticsServic
 				}
 			}
 			// jian 2016 - 5 -15
-			
+			/*
 			for(NodePortTuple npt:portStats.keySet()){	
 				log.info(" switch and port {}",npt);
 				//if(npt.getNodeId().toString() == "00:00:00:00:00:00:00:01".toString() )
@@ -154,6 +154,8 @@ public class StatisticsCollector implements IFloodlightModule, IStatisticsServic
 				  // log.info("Byte  Tx  {}    Rx is {} ",portStats.get(npt).getPriorByteValueTx().getValue(),portStats.get(npt).getPriorByteValueRx().getValue());
 				}
 				}
+				*/
+			
 			
 			/**
 			for(NodePortTuple npt:tentativePortStats.keySet()){	

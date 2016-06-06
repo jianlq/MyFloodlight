@@ -18,13 +18,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.floodlightcontroller.core.IFloodlightProviderService;
 import net.floodlightcontroller.core.IOFSwitch;
 import net.floodlightcontroller.core.IOFSwitchListener;
+import net.floodlightcontroller.core.PortChangeType;
+import net.floodlightcontroller.core.internal.IOFSwitchService;
 import net.floodlightcontroller.core.module.FloodlightModuleContext;
 import net.floodlightcontroller.core.module.FloodlightModuleException;
 import net.floodlightcontroller.core.module.FloodlightModuleLoader;
 import net.floodlightcontroller.core.module.IFloodlightModule;
 import net.floodlightcontroller.core.module.IFloodlightService;
-import net.floodlightcontroller.output.Output;
+//import net.floodlightcontroller.output.Output;
 
+import org.projectfloodlight.openflow.protocol.OFPortDesc;
+import org.projectfloodlight.openflow.types.DatapathId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.snmp4j.CommunityTarget;
@@ -42,20 +46,22 @@ import org.snmp4j.smi.OctetString;
 import org.snmp4j.smi.UdpAddress;
 import org.snmp4j.smi.VariableBinding;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
-;
+
+
 public class IfIndexCollector implements IFloodlightModule, IIfIndexCollectionService, IOFSwitchListener {
 	public static final String oidIfDescr = "1.3.6.1.2.1.2.2.1.2";
 	public static final String snmpAddrPropStr = "net.floodlightcontroller.sflowcollector.IfIndexCollector.address";
 	public static final String snmpCommPropStr = "net.floodlightcontroller.sflowcollector.IfIndexCollector.community";
 	
-	protected IFloodlightProviderService floodlightProvider;
+	//protected Output ifNameTxt;
+	protected IOFSwitchService switchService;
 	protected List<String> agentIps;
 	protected Map<String, Map<Integer, String>> snmpAgentIfIndexIfNameMap;
 	protected Map<String,Set<String>> agentIfNamesMap;
 	protected String addr;
 	protected String comm;
-	protected static Logger logger;
-	protected Output ifNameTxt;
+	protected static Logger logger = LoggerFactory.getLogger(IfIndexCollector.class);
+	
 
 	@Override
 	public Collection<Class<? extends IFloodlightService>> getModuleServices() {
@@ -85,13 +91,15 @@ public class IfIndexCollector implements IFloodlightModule, IIfIndexCollectionSe
 	@Override
 	public void init(FloodlightModuleContext context)
 			throws FloodlightModuleException {
-		floodlightProvider = context.getServiceImpl(IFloodlightProviderService.class);
+		switchService = context.getServiceImpl(IOFSwitchService.class);
 		snmpAgentIfIndexIfNameMap = new ConcurrentHashMap<String, Map<Integer, String>>();
 		agentIfNamesMap=new ConcurrentHashMap<String, Set<String>>() ;
 //		ifIndexNameMap = new ConcurrentHashMap<Integer, String>();
 		agentIps = Collections.synchronizedList(new ArrayList<String>());
-		logger = LoggerFactory.getLogger(IfIndexCollector.class);
-		ifNameTxt=new Output("ifNameTxt.txt");
+		//logger = LoggerFactory.getLogger(IfIndexCollector.class);
+		//ifNameTxt=new Output("ifNameTxt.txt");
+		
+		logger.info("---------------------Ifindex Collector init "); //jian
 	}
 
 	@Override
@@ -105,18 +113,20 @@ public class IfIndexCollector implements IFloodlightModule, IIfIndexCollectionSe
 			logger.error("Could not load SNMP ADDRESS configuration file", e);
 			System.exit(1);
 		}
-		/*boolean enabled = Boolean.parseBoolean(prop.getProperty(ISflowCollectionService.enabledPropStr, "false"));
+		
+		boolean enabled = Boolean.parseBoolean(prop.getProperty(ISflowCollectionService.enabledPropStr, "false"));
 		if(!enabled) {
 			logger.info("IfindexCollector Not Enabled.");
 			return;
-		}*/
+		}
 		addr = prop.getProperty(snmpAddrPropStr);
 		comm = prop.getProperty(snmpCommPropStr);
 		if(addr == null || comm == null) {
 			logger.error("Could not load SNMP ADDRESS configuration file");
+			logger.info("------- Could not load SNMP ADDRESS ");
         	return;
 		}
-		floodlightProvider.addOFSwitchListener(this);
+		switchService.addOFSwitchListener(this);
 	}
 	
 	private void snmpWalk(Map<Integer, String> ifIndexNameMap,Set<String>ifNames, String addr, String comm, String agentIp) {
@@ -130,8 +140,9 @@ public class IfIndexCollector implements IFloodlightModule, IIfIndexCollectionSe
 		target.setRetries(3);
 		target.setVersion(SnmpConstants.version1);
 		
-		// creating PDU
+		// creating PDU //协议数据单元（Protocol Data Unit）
 		OID targetOID = new OID(oidIfDescr);
+		// OID对象标识符 Object Identifier
 		PDU requestPDU = new PDU();
 		requestPDU.setType(PDU.GETNEXT);
 		requestPDU.add(new VariableBinding(targetOID));
@@ -266,8 +277,10 @@ public class IfIndexCollector implements IFloodlightModule, IIfIndexCollectionSe
 	}
 
 	@Override
-	public void addedSwitch(IOFSwitch sw) {
-		ifNameTxt.writeData("new sw");
+	public void switchAdded(DatapathId switchId) {
+		//ifNameTxt.writeData("new sw");	
+		for(IOFSwitch sw : switchService.getAllSwitchMap().values()) {
+			if(sw.getId()==switchId){
 		SocketAddress sa = sw.getInetAddress();
 		if(sa instanceof InetSocketAddress) {                                                    
 			InetSocketAddress isa = (InetSocketAddress) sa;
@@ -280,15 +293,17 @@ public class IfIndexCollector implements IFloodlightModule, IIfIndexCollectionSe
 					agentIfNamesMap.put(ip,new HashSet<String>());
 					
 				}
-				ifNameTxt.writeData("start to snmpwalk");
+				//ifNameTxt.writeData("start to snmpwalk");
 				snmpWalk(snmpAgentIfIndexIfNameMap.get(ip),agentIfNamesMap.get(ip), addr, comm, ip); 
 			}
 			//snmpWalk(snmpAgentIfIndexIfNameMap.get(ip),agentIfNamesMap.get(ip), addr, comm, ip); 
 		}
+			}
+		}
 	}
 
 	@Override
-	public void removedSwitch(IOFSwitch sw) {
+	public void switchRemoved(DatapathId switchId) {
 		//We don't need to process this situation
 //		SocketAddress sa = sw.getInetAddress();
 //		if(sa instanceof InetSocketAddress) {
@@ -313,25 +328,44 @@ public class IfIndexCollector implements IFloodlightModule, IIfIndexCollectionSe
 //			}
 //		}
 	}
+	
+	@Override
+	 public void switchActivated(DatapathId switchId){
+	 
+	 }
 
 	@Override
-	public void switchPortChanged(Long switchId) {
+	public void switchPortChanged(DatapathId switchId,
+            OFPortDesc port,
+            PortChangeType type) {
 		//this don't need to process either
 		//		ifIndexNameMap.clear();
 //		for(String agentIP : agentIps) {
 //			snmpWalk(ifIndexNameMap, addr, comm, agentIP);
 //		}
 	}
+	
 
 	@Override
-	public String getName() {
-		return "IfIndexCollector";
+	 public void switchChanged(DatapathId switchId){
+		
 	}
+	
 
 	@Override
 	public Set<String> returnIfnames(String snmpAgentIp) {
 		
 		return agentIfNamesMap.get(snmpAgentIp);
 	}
+	
+	@Override
+	public void switchDeactivated(DatapathId switchId){
+		
+	}
+	
+	public String getName() {
+		return "IfIndexCollector";
+	}
 
 }
+

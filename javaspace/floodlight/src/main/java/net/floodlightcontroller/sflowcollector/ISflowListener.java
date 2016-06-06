@@ -4,5 +4,6 @@ import java.util.Map;
 
 public interface ISflowListener {
 	
-	public abstract void sflowCollected(Map<String, InterfaceStatistics> ifNameIfStatMap);
+	public abstract void sflowCollectedBase(Map<String, InterfaceStatistics> ifNameIfStatMap);
+	public abstract void sflowCollected(Map<Integer, InterfaceStatistics> ifNameIfStatMap);
 }
