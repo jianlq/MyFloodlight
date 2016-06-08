@@ -1,6 +1,12 @@
 package net.floodlightcontroller.sflowcollector;
 
+
+import java.util.Map;
+
+
 import net.floodlightcontroller.core.module.IFloodlightService;
+import net.floodlightcontroller.topology.NodePortTuple;
+
 
 public interface ISflowCollectionService extends IFloodlightService {
 	
@@ -10,4 +16,7 @@ public interface ISflowCollectionService extends IFloodlightService {
 	public abstract void addSflowListener(ISflowListener listener);
 	
 	public abstract void removeSflowListener(ISflowListener listener);
+	
+	public Map<NodePortTuple,InterfaceStatistics > getStatisticsMap(); //参考带宽收集模块所得
+	
 }
